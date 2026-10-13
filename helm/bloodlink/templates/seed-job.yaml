@@ -1,0 +1,50 @@
+{{- if .Values.seed.enabled }}
+{{- $fullname := include "bloodlink.fullname" . -}}
+# Demo data for a fresh install. The seed script does nothing if data already exists.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $fullname }}-seed
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: seed
+  annotations:
+    helm.sh/hook: post-install
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "seed") | nindent 8 }}
+        bloodlink.io/db-client: "true"
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "bloodlink.podSecurityContext" (dict "uid" 10001) | nindent 8 }}
+      initContainers:
+        {{- include "bloodlink.waitForDb" . | nindent 8 }}
+      containers:
+        - name: seed
+          image: {{ include "bloodlink.image" (dict "ctx" . "name" "backend") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c", "alembic upgrade head && python -m app.seed"]
+          env:
+            {{- include "bloodlink.databaseEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext:
+            {{- include "bloodlink.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

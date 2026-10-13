@@ -1,0 +1,122 @@
+# Default values for the BloodLink chart. Environment files (values-kind.yaml,
+# values-eks.yaml) only override what differs.
+
+image:
+  # Images are pushed by CI as <registry>/bloodlink-backend:<git-sha> and
+  # <registry>/bloodlink-frontend:<git-sha>.
+  registry: ghcr.io/ishan007-bot
+  # The commit SHA to deploy. CI always sets this; there is no "latest".
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+backend:
+  replicas: 2
+  port: 8000
+  # Business settings passed to the API as environment variables.
+  config:
+    safetyStock: 10
+    unitShelfLifeDays: 42
+    donationGapDays: 90
+    expiringWindowDays: 7
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  # Run "alembic upgrade head" in an init container before the API starts.
+  # Concurrent pods are safe: migrations take a PostgreSQL advisory lock.
+  migrateOnStart: true
+
+frontend:
+  replicas: 2
+  port: 8080
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+
+autoscaling:
+  backend:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  frontend:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+postgresql:
+  image: postgres:16-alpine
+  auth:
+    database: bloodlink
+    username: bloodlink
+    # Leave empty to generate a random password on first install (kept on upgrade).
+    password: ""
+    # Or point at a Secret you created yourself (keys: password, database-url).
+    # Required for GitOps tools such as Argo CD, which cannot use Helm's lookup.
+    existingSecret: ""
+  storage:
+    size: 5Gi
+    # Empty uses the cluster's default StorageClass.
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  # Empty host matches any hostname (useful behind a cloud load balancer).
+  host: ""
+  annotations: {}
+  tls: []
+
+networkPolicy:
+  # Only pods labelled bloodlink.io/db-client=true may reach PostgreSQL.
+  enabled: true
+
+seed:
+  # Fill an empty database with demo data after install (Helm post-install hook).
+  enabled: false
+
+backup:
+  # Nightly pg_dump to a PersistentVolume, keeping the newest N dumps.
+  enabled: true
+  schedule: "0 2 * * *"
+  keep: 7
+  storage:
+    size: 2Gi
+    storageClass: ""
+
+monitoring:
+  # Needs the Prometheus Operator CRDs (kube-prometheus-stack).
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    # Labels the Prometheus instance selects ServiceMonitors / rules by.
+    labels:
+      release: kube-prometheus-stack
+  prometheusRule:
+    enabled: true
+  grafanaDashboard:
+    # ConfigMap picked up by the Grafana dashboard sidecar.
+    enabled: true
+    labels:
+      grafana_dashboard: "1"

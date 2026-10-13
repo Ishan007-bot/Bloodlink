@@ -1,0 +1,14 @@
+# Local kind cluster (k8s/kind-config.yaml): ingress-nginx on localhost:80.
+ingress:
+  host: bloodlink.localhost
+
+postgresql:
+  storage:
+    storageClass: standard  # kind's local-path provisioner
+
+backup:
+  storage:
+    storageClass: standard
+
+seed:
+  enabled: true

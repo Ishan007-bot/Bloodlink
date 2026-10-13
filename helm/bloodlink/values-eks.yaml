@@ -1,0 +1,30 @@
+# AWS EKS (terraform/): gp3 EBS volumes via the EBS CSI driver, ingress-nginx behind an NLB.
+ingress:
+  # No host: the app answers on the load balancer's DNS name.
+  host: ""
+
+postgresql:
+  storage:
+    storageClass: gp3
+    size: 10Gi
+
+backup:
+  storage:
+    storageClass: gp3
+
+backend:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 192Mi
+    limits:
+      cpu: "1"
+      memory: 384Mi
+
+autoscaling:
+  backend:
+    minReplicas: 2
+    maxReplicas: 8
+
+seed:
+  enabled: true

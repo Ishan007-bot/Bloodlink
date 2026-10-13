@@ -1,0 +1,12 @@
+# Application namespace. Pod Security Admission "restricted": every pod must run as
+# non-root, drop all capabilities, forbid privilege escalation and use a seccomp profile.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bloodlink
+  labels:
+    app.kubernetes.io/part-of: bloodlink
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

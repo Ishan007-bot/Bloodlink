@@ -1,0 +1,79 @@
+{{- if and .Values.monitoring.prometheusRule.enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+{{- $fullname := include "bloodlink.fullname" . -}}
+{{- $ns := .Release.Namespace -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    {{- toYaml .Values.monitoring.serviceMonitor.labels | nindent 4 }}
+spec:
+  groups:
+    - name: bloodlink.availability
+      rules:
+        - alert: BloodLinkBackendDown
+          expr: sum(up{namespace="{{ $ns }}", service="{{ $fullname }}-backend"}) == 0 or absent(up{namespace="{{ $ns }}", service="{{ $fullname }}-backend"})
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: No BloodLink backend replica is being scraped
+            description: Prometheus has not reached any backend pod for 2 minutes. Check `kubectl get pods -n {{ $ns }}`.
+        - alert: BloodLinkHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="{{ $ns }}", status="5xx"}[5m]))
+              / clamp_min(sum(rate(http_requests_total{namespace="{{ $ns }}"}[5m])), 0.001) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: More than 5% of API requests are failing
+            description: "5xx ratio is {{`{{ $value | humanizePercentage }}`}} over the last 5 minutes."
+        - alert: BloodLinkSlowAPI
+          expr: |
+            histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{namespace="{{ $ns }}"}[5m]))) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: API p95 latency above 1 second
+            description: "p95 latency is {{`{{ $value | humanizeDuration }}`}}."
+    - name: bloodlink.inventory
+      rules:
+        # Inventory gauges are read from the database by every replica, so take max() per group.
+        - alert: BloodLinkCriticalStock
+          expr: |
+            max by (blood_group) (bloodlink_units_available{namespace="{{ $ns }}"})
+              < scalar(max(bloodlink_safety_stock_units{namespace="{{ $ns }}"})) / 2
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{`{{ $labels.blood_group }}`}} stock is critical"
+            description: "Only {{`{{ $value }}`}} units of {{`{{ $labels.blood_group }}`}} are available. Call donors."
+        - alert: BloodLinkUniversalDonorLow
+          expr: max(bloodlink_units_available{namespace="{{ $ns }}", blood_group="O-"}) < 3
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: O- (universal donor) stock below 3 units
+            description: O- is the only blood that can be given in an emergency before the patient's group is known.
+        - alert: BloodLinkEmergencyBacklog
+          expr: sum(max by (status) (bloodlink_requests{namespace="{{ $ns }}", priority="EMERGENCY", status=~"PENDING|PARTIAL"})) > 0
+          for: 15m
+          labels:
+            severity: critical
+          annotations:
+            summary: An emergency blood request has been open for 15 minutes
+            description: "{{`{{ $value }}`}} emergency request(s) are not fully allocated. Process the queue or source compatible units."
+        - alert: BloodLinkUnitsExpiringSoon
+          expr: sum(max by (blood_group) (bloodlink_units_expiring_soon{namespace="{{ $ns }}"})) > 20
+          for: 1h
+          labels:
+            severity: info
+          annotations:
+            summary: More than 20 units expire within 7 days
+            description: Offer them to partner hospitals to avoid wastage.
+{{- end }}

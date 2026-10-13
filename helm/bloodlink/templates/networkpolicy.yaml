@@ -1,0 +1,26 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $fullname := include "bloodlink.fullname" . -}}
+# PostgreSQL accepts connections only from pods that need the database
+# (backend, migration/seed jobs, backups), all labelled bloodlink.io/db-client=true.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-postgres
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "database") | nindent 6 }}
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              bloodlink.io/db-client: "true"
+      ports:
+        - protocol: TCP
+          port: 5432
+{{- end }}

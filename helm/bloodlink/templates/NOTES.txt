@@ -1,0 +1,16 @@
+BloodLink {{ .Values.image.tag | trunc 7 }} is deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+  kubectl get pods,svc,ingress,hpa -n {{ .Release.Namespace }}
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if .Values.ingress.enabled }}
+
+Open the app through the Ingress:
+{{- if .Values.ingress.host }}
+  http://{{ .Values.ingress.host }}/          (UI)
+  http://{{ .Values.ingress.host }}/api/stats (API)
+{{- else }}
+  kubectl get ingress {{ include "bloodlink.fullname" . }} -n {{ .Release.Namespace }}   # use the ADDRESS column
+{{- end }}
+{{- end }}
+
+Database credentials live in Secret "{{ include "bloodlink.dbSecretName" . }}" (never in Git).

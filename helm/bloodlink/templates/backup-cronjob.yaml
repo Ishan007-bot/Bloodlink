@@ -1,0 +1,82 @@
+{{- if .Values.backup.enabled }}
+{{- $fullname := include "bloodlink.fullname" . -}}
+# Nightly logical backup: pg_dump | gzip onto a PersistentVolume, keeping the newest N files.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $fullname }}-backup
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "backup") | nindent 12 }}
+            bloodlink.io/db-client: "true"
+        spec:
+          restartPolicy: OnFailure
+          # The backup volume is ReadWriteOnce and belongs to the PostgreSQL pod, so the
+          # job must run on the same node.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchLabels:
+                      {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "database") | nindent 22 }}
+          securityContext:
+            {{- include "bloodlink.podSecurityContext" (dict "uid" 70) | nindent 12 }}
+          containers:
+            - name: pg-dump
+              image: {{ .Values.postgresql.image }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - sh
+                - -c
+                - |
+                  set -eu
+                  file="/backups/bloodlink-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+                  pg_dump -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" --no-owner | gzip > "$file"
+                  echo "wrote $file ($(du -h "$file" | cut -f1))"
+                  ls -1t /backups/bloodlink-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+                  echo "backups kept:"; ls -1t /backups
+              env:
+                - name: PGHOST
+                  value: {{ include "bloodlink.dbHost" . }}
+                - name: PGDATABASE
+                  value: {{ .Values.postgresql.auth.database | quote }}
+                - name: PGUSER
+                  value: {{ .Values.postgresql.auth.username | quote }}
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "bloodlink.dbSecretName" . }}
+                      key: password
+                - name: KEEP
+                  value: {{ .Values.backup.keep | quote }}
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {cpu: 500m, memory: 256Mi}
+              securityContext:
+                {{- include "bloodlink.containerSecurityContext" . | nindent 16 }}
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                # Created by the PostgreSQL StatefulSet's volumeClaimTemplates.
+                claimName: backups-{{ $fullname }}-postgres-0
+            - name: tmp
+              emptyDir: {}
+{{- end }}

@@ -1,0 +1,119 @@
+{{- $fullname := include "bloodlink.fullname" . -}}
+{{- $be := .Values.backend -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-backend
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.autoscaling.backend.enabled }}
+  replicas: {{ $be.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "backend") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bloodlink.podLabels" (dict "ctx" . "component" "backend") | nindent 8 }}
+        bloodlink.io/db-client: "true"
+      annotations:
+        # Roll the pods when the database credentials change.
+        checksum/db-secret: {{ include (print $.Template.BasePath "/db-secret.yaml") . | sha256sum | trunc 16 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "bloodlink.podSecurityContext" (dict "uid" 10001) | nindent 8 }}
+      initContainers:
+        {{- include "bloodlink.waitForDb" . | nindent 8 }}
+        {{- if $be.migrateOnStart }}
+        - name: migrate
+          image: {{ include "bloodlink.image" (dict "ctx" . "name" "backend") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["alembic", "upgrade", "head"]
+          env:
+            {{- include "bloodlink.databaseEnv" . | nindent 12 }}
+          securityContext:
+            {{- include "bloodlink.containerSecurityContext" . | nindent 12 }}
+          resources:
+            {{- toYaml $be.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+        {{- end }}
+      containers:
+        - name: backend
+          image: {{ include "bloodlink.image" (dict "ctx" . "name" "backend") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $be.port }}
+          env:
+            {{- include "bloodlink.databaseEnv" . | nindent 12 }}
+            - name: SAFETY_STOCK
+              value: {{ $be.config.safetyStock | quote }}
+            - name: UNIT_SHELF_LIFE_DAYS
+              value: {{ $be.config.unitShelfLifeDays | quote }}
+            - name: DONATION_GAP_DAYS
+              value: {{ $be.config.donationGapDays | quote }}
+            - name: EXPIRING_WINDOW_DAYS
+              value: {{ $be.config.expiringWindowDays | quote }}
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 3
+            failureThreshold: 20
+          livenessProbe:
+            # Process health only: a database outage must not restart the API.
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            # Takes the pod out of the Service while the database is unreachable.
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+          resources:
+            {{- toYaml $be.resources | nindent 12 }}
+          securityContext:
+            {{- include "bloodlink.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-backend
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "backend") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $be.port }}
+      targetPort: http

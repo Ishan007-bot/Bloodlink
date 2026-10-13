@@ -1,0 +1,22 @@
+{{- if and .Values.monitoring.serviceMonitor.enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+{{- $fullname := include "bloodlink.fullname" . -}}
+# Tells the Prometheus Operator to scrape the backend's /metrics endpoint.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $fullname }}-backend
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    {{- toYaml .Values.monitoring.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "backend") | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+{{- end }}

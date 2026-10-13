@@ -1,0 +1,49 @@
+# Values for prometheus-community/kube-prometheus-stack (Prometheus Operator, Prometheus,
+# Alertmanager, Grafana, kube-state-metrics, node-exporter).
+#
+#   helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
+
+prometheus:
+  prometheusSpec:
+    # Pick up ServiceMonitors and PrometheusRules from every namespace, not only those
+    # labelled for this Helm release (the BloodLink chart creates its own).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 3d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
+grafana:
+  defaultDashboardsTimezone: browser
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # The BloodLink dashboard ConfigMap lives in the app namespace.
+      searchNamespace: ALL
+  # The admin password is generated into the kube-prometheus-stack-grafana Secret.
+
+# Control-plane components are managed (EKS) or not reachable (kind), so do not scrape them;
+# otherwise their targets would show as permanently DOWN.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

@@ -1,0 +1,121 @@
+{{- $fullname := include "bloodlink.fullname" . -}}
+{{- $pg := .Values.postgresql -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "bloodlink.dbHost" . }}
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  # Headless: the StatefulSet's stable network identity; clients resolve straight to the pod.
+  clusterIP: None
+  selector:
+    {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "database") | nindent 4 }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-postgres
+  labels:
+    {{- include "bloodlink.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  serviceName: {{ include "bloodlink.dbHost" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "database") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "bloodlink.podLabels" (dict "ctx" . "component" "database") | nindent 8 }}
+    spec:
+      securityContext:
+        {{- include "bloodlink.podSecurityContext" (dict "uid" 70) | nindent 8 }}
+      containers:
+        - name: postgres
+          image: {{ $pg.image }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: {{ $pg.auth.database | quote }}
+            - name: POSTGRES_USER
+              value: {{ $pg.auth.username | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "bloodlink.dbSecretName" . }}
+                  key: password
+            # A subdirectory, because cloud volumes come with a lost+found directory at the root.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -h 127.0.0.1"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            {{- toYaml $pg.resources | nindent 12 }}
+          securityContext:
+            {{- include "bloodlink.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.backup.enabled }}
+            # Read-only here, so a dump can be restored from inside the database pod.
+            - name: backups
+              mountPath: /backups
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "database") | nindent 10 }}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with $pg.storage.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $pg.storage.size }}
+    {{- if .Values.backup.enabled }}
+    # Volume for nightly pg_dump files (see backup-cronjob.yaml). Created here rather
+    # than as a standalone PVC so it binds when PostgreSQL starts.
+    - metadata:
+        name: backups
+        labels:
+          {{- include "bloodlink.selectorLabels" (dict "ctx" . "component" "backup") | nindent 10 }}
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.backup.storage.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.backup.storage.size }}
+    {{- end }}
