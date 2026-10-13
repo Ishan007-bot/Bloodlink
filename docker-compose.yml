@@ -1,0 +1,77 @@
+# Full local stack:   docker compose up --build             -> http://localhost:3000
+# With demo data:     docker compose --profile demo up --build
+#
+# Start-up order: postgres (healthy) -> migrate (runs once) -> backend (healthy) -> frontend.
+name: bloodlink
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+psycopg://bloodlink:bloodlink@postgres:5432/bloodlink
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bloodlink
+      POSTGRES_USER: bloodlink
+      POSTGRES_PASSWORD: bloodlink  # local development only; Kubernetes uses a Secret
+    ports:
+      - "5433:5432"  # 5433 on the host so it does not clash with a locally installed PostgreSQL
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloodlink -d bloodlink"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build: ./backend
+    image: bloodlink-backend:local
+    command: ["alembic", "upgrade", "head"]
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    image: bloodlink-backend:local
+    command: ["python", "-m", "app.seed"]
+    environment: *backend-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    profiles: ["demo"]
+    restart: "no"
+
+  backend:
+    image: bloodlink-backend:local
+    environment: *backend-env
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: bloodlink-frontend:local
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101,gid=101
+    restart: unless-stopped
+
+volumes:
+  pgdata:
