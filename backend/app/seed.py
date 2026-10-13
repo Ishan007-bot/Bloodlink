@@ -3,7 +3,7 @@
     python -m app.seed            # only seeds an empty database
     python -m app.seed --force    # adds another batch even if data exists
 
-Donations are spread over the last 60 days (so some units are already expired and some
+Donations are spread over the last 50 days (so some units are already expired and some
 are about to), and hospital requests over the last 7 days. Requests are fulfilled at
 realistic delays after they were raised, so the dashboard and metrics have history.
 """
@@ -32,7 +32,7 @@ FIRST = ["Aarav", "Diya", "Kabir", "Meera", "Rohan", "Ananya", "Vihaan", "Isha",
 LAST = ["Sharma", "Patel", "Rao", "Iyer", "Khan", "Singh", "Das", "Menon", "Joshi", "Gupta"]
 
 
-def seed(force: bool = False, donors: int = 320, requests: int = 40, rng_seed: int = 13) -> str:
+def seed(force: bool = False, donors: int = 320, requests: int = 28, rng_seed: int = 13) -> str:
     rng = random.Random(rng_seed)
     now = utcnow()
     with SessionLocal() as db:
@@ -57,9 +57,9 @@ def seed(force: bool = False, donors: int = 320, requests: int = 40, rng_seed: i
             )
             db.add(donor)
             db.commit()
-            # About 85% of donors gave blood in the last 60 days.
+            # About 85% of donors gave blood in the last 50 days.
             if i % 7 != 0:
-                collected = now - timedelta(days=rng.uniform(0, 60), hours=rng.uniform(0, 8))
+                collected = now - timedelta(days=rng.uniform(0, 50), hours=rng.uniform(0, 8))
                 try:
                     record_donation(db, donor, collected)
                     donated += 1
