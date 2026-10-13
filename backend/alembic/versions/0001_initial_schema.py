@@ -52,9 +52,7 @@ def upgrade() -> None:
     op.create_table(
         "blood_requests",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "hospital_id", sa.Integer(), sa.ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False
-        ),
+        sa.Column("hospital_id", sa.Integer(), sa.ForeignKey("hospitals.id", ondelete="CASCADE"), nullable=False),
         sa.Column("patient_ref", sa.String(60), nullable=False, server_default=""),
         sa.Column("blood_group", sa.String(3), nullable=False),
         sa.Column("units_needed", sa.Integer(), nullable=False),
@@ -69,9 +67,7 @@ def upgrade() -> None:
     op.create_table(
         "allocations",
         sa.Column("id", sa.Integer(), primary_key=True),
-        sa.Column(
-            "request_id", sa.Integer(), sa.ForeignKey("blood_requests.id", ondelete="CASCADE"), nullable=False
-        ),
+        sa.Column("request_id", sa.Integer(), sa.ForeignKey("blood_requests.id", ondelete="CASCADE"), nullable=False),
         sa.Column("unit_id", sa.Integer(), sa.ForeignKey("blood_units.id"), nullable=False, unique=True),
         sa.Column("match_type", sa.String(10), nullable=False),
         sa.Column("allocated_at", sa.DateTime(), nullable=False),

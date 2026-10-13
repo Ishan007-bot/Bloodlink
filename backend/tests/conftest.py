@@ -39,13 +39,9 @@ def stock(client):
         ids = []
         for _ in range(count):
             counter["n"] += 1
-            donor = client.post(
-                "/api/donors", json={"name": f"Donor {counter['n']}", "blood_group": group}
-            ).json()
+            donor = client.post("/api/donors", json={"name": f"Donor {counter['n']}", "blood_group": group}).json()
             collected = (utcnow() - timedelta(days=days_old)).isoformat()
-            unit = client.post(
-                "/api/donations", json={"donor_id": donor["id"], "collected_at": collected}
-            )
+            unit = client.post("/api/donations", json={"donor_id": donor["id"], "collected_at": collected})
             assert unit.status_code == 201, unit.text
             ids.append(unit.json()["id"])
         return ids

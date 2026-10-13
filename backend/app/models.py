@@ -41,9 +41,7 @@ class BloodUnit(Base):
     __tablename__ = "blood_units"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    donor_id: Mapped[int | None] = mapped_column(
-        ForeignKey("donors.id", ondelete="SET NULL"), nullable=True
-    )
+    donor_id: Mapped[int | None] = mapped_column(ForeignKey("donors.id", ondelete="SET NULL"), nullable=True)
     blood_group: Mapped[str] = mapped_column(String(3), index=True)
     collected_at: Mapped[datetime] = mapped_column(DateTime)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
@@ -70,9 +68,7 @@ class BloodRequest(Base):
     fulfilled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     hospital: Mapped[Hospital] = relationship(back_populates="requests")
-    allocations: Mapped[list["Allocation"]] = relationship(
-        back_populates="request", cascade="all, delete-orphan"
-    )
+    allocations: Mapped[list["Allocation"]] = relationship(back_populates="request", cascade="all, delete-orphan")
 
 
 class Allocation(Base):

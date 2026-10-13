@@ -17,9 +17,7 @@ class Candidate:
     expires_at: datetime
 
 
-def choose_units(
-    candidates: list[Candidate], recipient_group: str, needed: int, now: datetime
-) -> list[Candidate]:
+def choose_units(candidates: list[Candidate], recipient_group: str, needed: int, now: datetime) -> list[Candidate]:
     """Pick up to `needed` units for a recipient.
 
     Rules, in order:

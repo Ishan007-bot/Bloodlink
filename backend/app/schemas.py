@@ -65,9 +65,7 @@ class HospitalOut(ORM):
 # Units and donations
 class DonationCreate(BaseModel):
     donor_id: int
-    collected_at: datetime | None = Field(
-        default=None, description="Defaults to now (UTC). Cannot be in the future."
-    )
+    collected_at: datetime | None = Field(default=None, description="Defaults to now (UTC). Cannot be in the future.")
 
 
 class UnitOut(ORM):

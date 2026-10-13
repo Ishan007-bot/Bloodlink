@@ -20,9 +20,7 @@ class DomainError(Exception):
 def expire_stale_units(db: Session, now: datetime) -> int:
     """Mark AVAILABLE units past their expiry date as EXPIRED. Returns how many changed."""
     result = db.execute(
-        update(BloodUnit)
-        .where(BloodUnit.status == "AVAILABLE", BloodUnit.expires_at <= now)
-        .values(status="EXPIRED")
+        update(BloodUnit).where(BloodUnit.status == "AVAILABLE", BloodUnit.expires_at <= now).values(status="EXPIRED")
     )
     db.commit()
     return result.rowcount or 0
@@ -38,9 +36,7 @@ def record_donation(db: Session, donor: Donor, collected_at: datetime) -> BloodU
     """Store one donated unit, enforcing the minimum gap between donations."""
     eligible_from = next_eligible_date(donor)
     if eligible_from is not None and collected_at.date() < eligible_from:
-        raise DomainError(
-            f"donor {donor.id} is not eligible to donate until {eligible_from.isoformat()}"
-        )
+        raise DomainError(f"donor {donor.id} is not eligible to donate until {eligible_from.isoformat()}")
     unit = BloodUnit(
         donor_id=donor.id,
         blood_group=donor.blood_group,
@@ -162,12 +158,8 @@ def inventory(db: Session, now: datetime) -> list[GroupStock]:
 def stats(db: Session, now: datetime) -> dict:
     """Headline numbers for the dashboard."""
     expire_stale_units(db, now)
-    units_by_status = dict(
-        db.execute(select(BloodUnit.status, func.count()).group_by(BloodUnit.status)).all()
-    )
-    requests_by_status = dict(
-        db.execute(select(BloodRequest.status, func.count()).group_by(BloodRequest.status)).all()
-    )
+    units_by_status = dict(db.execute(select(BloodUnit.status, func.count()).group_by(BloodUnit.status)).all())
+    requests_by_status = dict(db.execute(select(BloodRequest.status, func.count()).group_by(BloodRequest.status)).all())
     fulfilled = requests_by_status.get("FULFILLED", 0)
     considered = sum(requests_by_status.values()) - requests_by_status.get("CANCELLED", 0)
 

@@ -52,16 +52,13 @@ class InventoryCollector:
             f"Available units expiring within {settings.expiring_window_days} days.",
             labels=["blood_group"],
         )
-        units_total = GaugeMetricFamily(
-            "bloodlink_units", "Blood units by status.", labels=["status"]
-        )
+        units_total = GaugeMetricFamily("bloodlink_units", "Blood units by status.", labels=["status"])
         requests = GaugeMetricFamily(
-            "bloodlink_requests", "Blood requests by status and priority.",
+            "bloodlink_requests",
+            "Blood requests by status and priority.",
             labels=["status", "priority"],
         )
-        safety = GaugeMetricFamily(
-            "bloodlink_safety_stock_units", "Configured safety stock per blood group."
-        )
+        safety = GaugeMetricFamily("bloodlink_safety_stock_units", "Configured safety stock per blood group.")
         safety.add_metric([], settings.safety_stock)
 
         try:
@@ -86,9 +83,7 @@ class InventoryCollector:
                         .group_by(BloodUnit.blood_group)
                     ).all()
                 )
-                by_status = db.execute(
-                    select(BloodUnit.status, func.count()).group_by(BloodUnit.status)
-                ).all()
+                by_status = db.execute(select(BloodUnit.status, func.count()).group_by(BloodUnit.status)).all()
                 req_rows = db.execute(
                     select(BloodRequest.status, BloodRequest.priority, func.count()).group_by(
                         BloodRequest.status, BloodRequest.priority

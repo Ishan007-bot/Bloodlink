@@ -104,16 +104,14 @@ def list_donors(
     donors = [_donor_out(d) for d in db.scalars(query)]
     if eligible is not None:
         today = utcnow().date()
-        donors = [
-            d for d in donors if (d.next_eligible_on is None or d.next_eligible_on <= today) == eligible
-        ]
+        donors = [d for d in donors if (d.next_eligible_on is None or d.next_eligible_on <= today) == eligible]
     return donors
 
 
 @router.post("/donors", response_model=DonorOut, status_code=status.HTTP_201_CREATED, tags=["donors"])
 def create_donor(payload: DonorCreate, db: Session = DB):
     if payload.last_donation_on and payload.last_donation_on > utcnow().date():
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "last_donation_on cannot be in the future")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "last_donation_on cannot be in the future")
     donor = Donor(**payload.model_dump())
     db.add(donor)
     db.commit()
@@ -154,7 +152,7 @@ def create_donation(payload: DonationCreate, db: Session = DB):
     now = utcnow()
     collected_at = payload.collected_at.replace(tzinfo=None) if payload.collected_at else now
     if collected_at > now + timedelta(minutes=5):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "collected_at cannot be in the future")
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "collected_at cannot be in the future")
     try:
         return services.record_donation(db, donor, collected_at)
     except services.DomainError as exc:
