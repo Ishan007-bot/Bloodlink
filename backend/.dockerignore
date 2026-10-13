@@ -1,0 +1,15 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+*.db
+.env
+tests
+requirements-dev.txt
+ruff.toml
+pytest.ini
+Dockerfile
+.dockerignore
