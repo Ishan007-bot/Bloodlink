@@ -329,3 +329,27 @@ def test_stats(client, stock, make_request):
     assert stats["fill_rate"] == 0.5
     assert stats["wastage_rate"] == round(1 / 3, 4)
     assert stats["avg_emergency_fill_minutes"] is not None
+
+
+# ---------------------------------------------------------------- seed data
+
+
+def test_seed_generates_consistent_history(client):
+    from app.seed import seed
+
+    assert seed().startswith("seeded 5 hospitals")
+    assert seed() == "database already has data; use --force to add more"
+    stats = client.get("/api/stats").json()
+    assert stats["units_expired"] > 0  # some donations are older than 42 days
+    assert stats["requests_fulfilled"] > 0
+    assert stats["requests_open"] >= 1
+    assert 0 < stats["fill_rate"] <= 1
+    for request in client.get("/api/requests", params={"status": "FULFILLED"}).json():
+        assert request["units_allocated"] == request["units_needed"]
+        for allocation in request["allocations"]:
+            assert (
+                allocation["blood_group"]
+                in {row["blood_group"]: row for row in client.get("/api/compatibility").json()}[request["blood_group"]][
+                    "can_receive_from"
+                ]
+            )

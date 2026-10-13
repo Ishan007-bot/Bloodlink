@@ -62,6 +62,7 @@ def fulfil_request(db: Session, request: BloodRequest, now: datetime) -> list[Al
         select(BloodUnit.id, BloodUnit.blood_group, BloodUnit.expires_at).where(
             BloodUnit.status == "AVAILABLE",
             BloodUnit.blood_group.in_(donor_groups_for(request.blood_group)),
+            BloodUnit.collected_at <= now,
         )
     ).all()
     chosen = choose_units(
