@@ -27,8 +27,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -50,8 +50,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -64,7 +64,7 @@ jobs:
     name: Secrets and dependency scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # scan the whole history, not just the last commit
       - name: Secret scan (gitleaks)
@@ -91,7 +91,7 @@ jobs:
       tag: ${{ steps.meta.outputs.tag }}
       owner: ${{ steps.meta.outputs.owner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Image names
         id: meta
         run: |
@@ -150,9 +150,9 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
       CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME || 'bloodlink-eks' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
