@@ -79,10 +79,44 @@ jobs:
         working-directory: frontend
         run: npm audit --audit-level=high
 
-  # ---------------------------------------------------------------- 4. images: build, scan, push
+  # ---------------------------------------------------------------- 4. infrastructure as code
+  iac:
+    name: Terraform, Helm and IaC scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.5"
+      - name: Terraform fmt and validate
+        run: |
+          terraform -chdir=terraform fmt -check -recursive
+          terraform -chdir=terraform init -backend=false -input=false
+          terraform -chdir=terraform validate
+          terraform -chdir=terraform/bootstrap init -backend=false -input=false
+          terraform -chdir=terraform/bootstrap validate
+      - uses: azure/setup-helm@v5
+      - name: Helm lint and schema validation
+        run: |
+          for env in kind eks; do
+            helm lint helm/bloodlink -f helm/bloodlink/values-$env.yaml --set image.tag=ci
+            helm template bloodlink helm/bloodlink -n bloodlink -f helm/bloodlink/values-$env.yaml               --set image.tag=ci --api-versions monitoring.coreos.com/v1 > rendered-$env.yaml
+          done
+          docker run --rm -v "$PWD:/w" ghcr.io/yannh/kubeconform:v0.6.7             -strict -summary -ignore-missing-schemas -kubernetes-version 1.33.0 /w/rendered-kind.yaml /w/rendered-eks.yaml
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main"             | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq trivy
+      - name: Misconfiguration scan (Terraform, Helm, Dockerfiles)
+        run: |
+          rm -f rendered-*.yaml
+          trivy config --severity "$TRIVY_SEVERITY" --exit-code 1 --ignorefile .trivyignore             --helm-set image.tag=ci .
+
+  # ---------------------------------------------------------------- 5. images: build, scan, push
   images:
     name: Build, scan and push images
-    needs: [backend, frontend, source-security]
+    needs: [backend, frontend, source-security, iac]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -135,7 +169,7 @@ jobs:
             echo "- \`$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-frontend:${{ steps.meta.outputs.tag }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # ---------------------------------------------------------------- 5. deploy to EKS
+  # ---------------------------------------------------------------- 6. deploy to EKS
   deploy:
     name: Deploy to EKS
     needs: images
@@ -158,7 +192,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Kubeconfig
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$CLUSTER_NAME"
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - name: Helm upgrade
         run: |
           helm upgrade --install bloodlink ./helm/bloodlink \
