@@ -22,7 +22,7 @@ spec:
         - name: report-builder
           image: python:3.12-slim
           # Simulates a report job that loads 200 MB into memory.
-          command: ["python", "-c", "import time; data = bytearray(200 * 1024 * 1024); print('built report'); time.sleep(3600)"]
+          command: ["python", "-u", "-c", "import time; data = bytearray(200 * 1024 * 1024); print('built report'); time.sleep(3600)"]
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
