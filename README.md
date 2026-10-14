@@ -5,7 +5,7 @@ until it is used or expires, and hospitals request units for patients. BloodLink
 **compatible** blood, uses the **oldest units first** so less blood is wasted, serves
 **emergencies first**, and warns before stock of any blood group runs out.
 
-[![CI/CD](https://github.com/Ishan007-bot/bloodlink/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Ishan007-bot/bloodlink/actions/workflows/ci-cd.yml)
+[![CI/CD](https://github.com/Ishan007-bot/Bloodlink/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Ishan007-bot/Bloodlink/actions/workflows/ci-cd.yml)
 
 > DevOps final capstone. Evidence for every rubric module, with screenshots: **[docs/EVIDENCE.md](docs/EVIDENCE.md)**.
 

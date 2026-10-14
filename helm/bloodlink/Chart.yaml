@@ -5,10 +5,10 @@ type: application
 version: 1.0.0
 appVersion: "1.0.0"
 kubeVersion: ">=1.29.0-0"
-icon: https://raw.githubusercontent.com/Ishan007-bot/bloodlink/main/frontend/public/favicon.svg
-home: https://github.com/Ishan007-bot/bloodlink
+icon: https://raw.githubusercontent.com/Ishan007-bot/Bloodlink/main/frontend/public/favicon.svg
+home: https://github.com/Ishan007-bot/Bloodlink
 sources:
-  - https://github.com/Ishan007-bot/bloodlink
+  - https://github.com/Ishan007-bot/Bloodlink
 maintainers:
   - name: Ishan Ganguly
     email: ishanganguly10a12@gmail.com

@@ -12,7 +12,7 @@ RUN npm run build
 FROM nginxinc/nginx-unprivileged:1.29-alpine
 LABEL org.opencontainers.image.title="bloodlink-frontend" \
       org.opencontainers.image.description="BloodLink React frontend served by Nginx" \
-      org.opencontainers.image.source="https://github.com/Ishan007-bot/bloodlink"
+      org.opencontainers.image.source="https://github.com/Ishan007-bot/Bloodlink"
 
 # Pull in Alpine security fixes that landed after the base image was published.
 USER root

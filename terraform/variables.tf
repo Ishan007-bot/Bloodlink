@@ -69,7 +69,7 @@ variable "node_max_size" {
 variable "github_repository" {
   description = "owner/repo allowed to deploy through GitHub Actions OIDC."
   type        = string
-  default     = "Ishan007-bot/bloodlink"
+  default     = "Ishan007-bot/Bloodlink"
 }
 
 variable "github_environment" {

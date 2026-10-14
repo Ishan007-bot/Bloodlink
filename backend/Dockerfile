@@ -14,7 +14,7 @@ RUN pip install -r requirements.txt \
 FROM python:3.12-slim
 LABEL org.opencontainers.image.title="bloodlink-backend" \
       org.opencontainers.image.description="BloodLink FastAPI backend" \
-      org.opencontainers.image.source="https://github.com/Ishan007-bot/bloodlink"
+      org.opencontainers.image.source="https://github.com/Ishan007-bot/Bloodlink"
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
