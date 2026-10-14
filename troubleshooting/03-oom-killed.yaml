@@ -1,0 +1,32 @@
+# Scenario 3: a container needs more memory than its limit.
+# Symptom: OOMKilled (exit code 137) and CrashLoopBackOff.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-oom
+  namespace: bloodlink
+  labels: {app: lab-oom}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: lab-oom}
+  template:
+    metadata:
+      labels: {app: lab-oom}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: report-builder
+          image: python:3.12-slim
+          # Simulates a report job that loads 200 MB into memory.
+          command: ["python", "-c", "import time; data = bytearray(200 * 1024 * 1024); print('built report'); time.sleep(3600)"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 10m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 64Mi}

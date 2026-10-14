@@ -1,0 +1,5 @@
+# Fix for scenario 2: select the pods by the label they really have.
+#   kubectl patch svc lab-broken-service -n bloodlink --patch-file troubleshooting/02-fix-service.patch.yaml
+spec:
+  selector:
+    app.kubernetes.io/component: backend

@@ -1,0 +1,30 @@
+# Scenario 1: a deployment points at an image tag that does not exist.
+# Symptom: ErrImagePull -> ImagePullBackOff. See docs/RUNBOOK.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-broken-image
+  namespace: bloodlink
+  labels: {app: lab-broken-image}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: lab-broken-image}
+  template:
+    metadata:
+      labels: {app: lab-broken-image}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: api
+          image: ghcr.io/ishan007-bot/bloodlink-backend:does-not-exist
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 128Mi}
