@@ -111,7 +111,8 @@ jobs:
       - name: Misconfiguration scan (Terraform, Helm, Dockerfiles)
         run: |
           rm -f rendered-*.yaml
-          trivy config --severity "$TRIVY_SEVERITY" --exit-code 1 --ignorefile .trivyignore             --helm-set image.tag=ci .
+          # .terraform/ holds downloaded third-party modules (with their own examples), not our code.
+          trivy config --severity "$TRIVY_SEVERITY" --exit-code 1 --ignorefile .trivyignore             --skip-dirs terraform/.terraform --skip-dirs terraform/bootstrap/.terraform             --helm-set image.tag=ci .
 
   # ---------------------------------------------------------------- 5. images: build, scan, push
   images:
