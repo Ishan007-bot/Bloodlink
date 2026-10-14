@@ -5,6 +5,30 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: bloodlink
+# Laptop disks are slow: etcd skips fsync (fine for a throwaway cluster) and the scheduler and
+# controller-manager get longer leader-election leases, so a slow write does not restart them.
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    etcd:
+      local:
+        extraArgs:
+          - name: unsafe-no-fsync
+            value: "true"
+    scheduler:
+      extraArgs:
+        - name: leader-elect-lease-duration
+          value: 60s
+        - name: leader-elect-renew-deadline
+          value: 40s
+    controllerManager:
+      extraArgs:
+        - name: enable-hostpath-provisioner   # kind's default, kept because lists are replaced
+          value: "true"
+        - name: leader-elect-lease-duration
+          value: 60s
+        - name: leader-elect-renew-deadline
+          value: 40s
 nodes:
   - role: control-plane
     labels:
