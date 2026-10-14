@@ -22,7 +22,7 @@ jobs:
   # ---------------------------------------------------------------- 1. backend quality gate
   backend:
     name: Backend lint and tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -45,7 +45,7 @@ jobs:
   # ---------------------------------------------------------------- 2. frontend build
   frontend:
     name: Frontend build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -62,7 +62,7 @@ jobs:
   # ---------------------------------------------------------------- 3. source security checks
   source-security:
     name: Secrets and dependency scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
@@ -82,7 +82,7 @@ jobs:
   # ---------------------------------------------------------------- 4. infrastructure as code
   iac:
     name: Terraform, Helm and IaC scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v4
@@ -118,7 +118,7 @@ jobs:
   images:
     name: Build, scan and push images
     needs: [backend, frontend, source-security, iac]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
@@ -176,7 +176,7 @@ jobs:
     needs: images
     # Runs only on main, and only while the EKS cluster exists (repository variable DEPLOY_EKS=true).
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_EKS == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     permissions:
       contents: read
