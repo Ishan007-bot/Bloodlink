@@ -1,0 +1,3 @@
+# Provider lock files are generated per machine here; CI runs `terraform init` itself.
+.terraform.lock.hcl
+backend.hcl

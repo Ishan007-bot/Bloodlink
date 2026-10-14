@@ -1,0 +1,16 @@
+# Accepted risks for `trivy config` (infrastructure-as-code scan). Each is a deliberate,
+# documented choice for this project, not an oversight.
+
+# AWS-0040 / AWS-0041: EKS API endpoint is public. GitHub-hosted runners (deploy job) and the
+# operator's laptop need to reach it; every request still needs IAM authentication and an
+# EKS access entry. Narrow it with the `api_allowed_cidrs` Terraform variable.
+AWS-0040
+AWS-0041
+
+# AWS-0104: worker-node security group allows outbound traffic. Nodes must pull images from
+# GHCR/ECR and call AWS APIs through the NAT gateway.
+AWS-0104
+
+# AWS-0132: the Terraform state bucket uses SSE-S3 (AES-256) instead of a customer-managed
+# KMS key, avoiding the KMS key charge for a short-lived classroom environment.
+AWS-0132

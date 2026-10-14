@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars (git-ignored) and adjust. No credentials belong in this file:
+# Terraform reads them from the AWS CLI profile / environment.
+region              = "ap-south-1"
+environment         = "prod"
+cluster_name        = "bloodlink-eks"
+kubernetes_version  = "1.35"
+vpc_cidr            = "10.40.0.0/16"
+node_instance_types = ["t3.medium"]
+node_min_size       = 2
+node_desired_size   = 2
+node_max_size       = 3
+github_repository   = "Ishan007-bot/bloodlink"

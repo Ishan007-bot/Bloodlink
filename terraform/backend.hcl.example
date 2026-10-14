@@ -1,0 +1,5 @@
+# Copy to backend.hcl (git-ignored) after running terraform/bootstrap, then:
+#   terraform init -backend-config=backend.hcl
+bucket = "bloodlink-tfstate-<your-account-id>"
+key    = "bloodlink/eks.tfstate"
+region = "ap-south-1"
