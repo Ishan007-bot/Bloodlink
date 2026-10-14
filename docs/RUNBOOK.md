@@ -112,6 +112,37 @@ The chart ships these Prometheus alert rules (`helm/bloodlink/templates/promethe
 | `BloodLinkEmergencyBacklog` | an emergency request open for 15 min | process the queue; source compatible units |
 | `BloodLinkUnitsExpiringSoon` | more than 20 units expire within 7 days | offer units to partner hospitals |
 
+## 8. Real incidents met while building BloodLink
+
+These were not staged: they happened on the local cluster and were diagnosed and fixed as below.
+
+### Grafana restarting: OOMKilled
+
+| | |
+| :--- | :--- |
+| Symptom | During the HPA load test Grafana became unreachable; `kubectl get pods -n monitoring` showed `kube-prometheus-stack-grafana` at `2/3` with 10+ restarts |
+| Look at | `kubectl get pod -n monitoring -l app.kubernetes.io/name=grafana -o jsonpath='{..lastState.terminated.reason}'` → `OOMKilled`; its limit was `256Mi` |
+| Cause | Grafana 12 with the default dashboards uses about 250 MiB, so normal load crossed the limit |
+| Fix | Limit raised to `512Mi` (request `192Mi`) in `monitoring/kube-prometheus-stack-values.yaml`, applied with `helm upgrade`; no restarts since |
+
+### Control plane restarting: "Leaderelection lost"
+
+| | |
+| :--- | :--- |
+| Symptom | `kube-scheduler` and `kube-controller-manager` in `CrashLoopBackOff`; a Job ran past its `activeDeadlineSeconds` and the HPA stopped reacting; `kubectl` briefly returned `Forbidden` and TLS timeouts |
+| Look at | `kubectl logs -n kube-system kube-scheduler-<node> --previous` → `Error retrieving lease lock ... context deadline exceeded`, `Leaderelection lost`; etcd logs → hundreds of `apply request took too long` (up to 1.5 s, expected 100 ms) |
+| Cause | etcd waits for every write to reach the disk (fsync). The laptop disk was slow (almost full, and Docker's disk image lives on it), so the API server missed the 5-second lease deadline and the components restarted themselves. Each restart added load, so they kept failing. Without the controller-manager, nothing enforces Job deadlines or runs the HPA |
+| Fix | For the throwaway local cluster: etcd `--unsafe-no-fsync=true` and longer leases (`--leader-elect-lease-duration=60s`, `--leader-elect-renew-deadline=40s`) in `k8s/kind-config.yaml`. Slow etcd requests went from 368 per 10 minutes to 0. Real clusters (EKS) run etcd on managed, fast storage and keep fsync on |
+
+### Docker stopped: disk full
+
+| | |
+| :--- | :--- |
+| Symptom | `docker ps` hung, then "Docker Desktop is unable to start"; a test run failed with `sqlite3.OperationalError: database or disk is full` |
+| Look at | `Get-PSDrive C` → 0 GB free; `docker system df` → 14 GB of build cache |
+| Cause | Repeated image builds left build cache in Docker's disk image, and interrupted `terraform init` runs left 2.9 GB of provider downloads in the temp folder |
+| Fix | `docker builder prune -af`, removed the leftover provider files, restarted Docker Desktop (`wsl --shutdown` first). The cluster came back with its data, because it lives on PersistentVolumes |
+
 ## Backups and restore
 
 A CronJob runs `pg_dump` nightly onto the `backups` volume (newest 7 kept). Run one now, then restore:

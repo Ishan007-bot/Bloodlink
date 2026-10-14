@@ -68,7 +68,7 @@ flowchart LR
 | Frontend | React 19 + Vite, served by unprivileged Nginx (non-root, read-only filesystem) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic v2 |
 | Database | PostgreSQL 16 |
-| Tests | pytest (81 tests, 98 % coverage), ruff lint + format |
+| Tests | pytest (81 tests, 97 % coverage), ruff lint + format |
 | Containers | Multi-stage Docker builds, non-root users, Docker Compose |
 | CI/CD | GitHub Actions: tests → frontend build → secret & dependency scan → IaC checks → image build → Trivy gate → GHCR → Helm deploy |
 | Security | Trivy (images + IaC), gitleaks, pip-audit, npm audit, Pod Security "restricted", NetworkPolicy, OIDC (no AWS keys in GitHub) |
