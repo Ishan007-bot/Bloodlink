@@ -1,6 +1,6 @@
 # Local Kubernetes for development and the live demo:
 #   kind create cluster --config k8s/kind-config.yaml
-# One control-plane node labelled for ingress-nginx, two workers, and host ports 80/443
+# One control-plane node labelled for ingress-nginx, one worker, and host ports 80/443
 # mapped so the Ingress answers on http://bloodlink.localhost.
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -16,5 +16,4 @@ nodes:
       - containerPort: 443
         hostPort: 443
         protocol: TCP
-  - role: worker
   - role: worker

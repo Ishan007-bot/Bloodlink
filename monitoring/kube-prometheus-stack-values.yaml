@@ -12,12 +12,13 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     ruleSelectorNilUsesHelmValues: false
     retention: 3d
+    # Sized to fit a laptop (Docker Desktop with ~6 GB) as well as EKS.
     resources:
       requests:
-        cpu: 200m
-        memory: 512Mi
+        cpu: 100m
+        memory: 256Mi
       limits:
-        memory: 1Gi
+        memory: 768Mi
 
 alertmanager:
   alertmanagerSpec:
@@ -28,6 +29,12 @@ alertmanager:
 
 grafana:
   defaultDashboardsTimezone: browser
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
   sidecar:
     dashboards:
       enabled: true

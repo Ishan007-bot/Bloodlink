@@ -17,7 +17,7 @@ $sha = git rev-parse HEAD          # any commit with a green pipeline
 
 The script is idempotent and does, in order:
 
-1. `kind create cluster --config k8s/kind-config.yaml` (1 control plane + 2 workers, host ports 80/443)
+1. `kind create cluster --config k8s/kind-config.yaml` (1 control plane + 1 worker, host ports 80/443)
 2. ingress-nginx (kind variant) and metrics-server (with `--kubelet-insecure-tls` for kind)
 3. kube-prometheus-stack with `monitoring/kube-prometheus-stack-values.yaml`
 4. `k8s/namespace.yaml` (Pod Security "restricted"), then

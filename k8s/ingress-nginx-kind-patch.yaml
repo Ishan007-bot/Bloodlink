@@ -1,0 +1,11 @@
+# kind maps host ports 80/443 only on the node labelled ingress-ready=true (the control
+# plane, see kind-config.yaml), so the ingress controller must run there.
+spec:
+  template:
+    spec:
+      nodeSelector:
+        ingress-ready: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
