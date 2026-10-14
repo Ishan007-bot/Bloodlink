@@ -11,7 +11,7 @@ BLOOD_GROUPS: tuple[str, ...] = ("O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+
 RECIPIENT_CAN_RECEIVE: dict[str, tuple[str, ...]] = {
     "O-": ("O-",),
     "O+": ("O+", "O-"),
-    "A-": ("A-", "O+", "O-"),
+    "A-": ("A-", "O-"),
     "A+": ("A+", "A-", "O+", "O-"),
     "B-": ("B-", "O-"),
     "B+": ("B+", "B-", "O+", "O-"),
