@@ -29,12 +29,13 @@ alertmanager:
 
 grafana:
   defaultDashboardsTimezone: browser
+  # Grafana 12 with the default dashboards uses ~250 MiB; 256Mi got it OOM-killed under load.
   resources:
     requests:
       cpu: 50m
-      memory: 128Mi
+      memory: 192Mi
     limits:
-      memory: 256Mi
+      memory: 512Mi
   sidecar:
     dashboards:
       enabled: true
