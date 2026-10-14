@@ -1,0 +1,44 @@
+# Generates CPU load on the backend for ~4 minutes so the HPA scales out.
+#   kubectl apply -f k8s/load-test-job.yaml
+#   kubectl get hpa bloodlink-backend -n bloodlink -w
+# Inventory and stats endpoints run aggregate SQL queries, so they cost real CPU.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-test
+  namespace: bloodlink
+spec:
+  parallelism: 6
+  completions: 6
+  activeDeadlineSeconds: 240
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 120
+  template:
+    metadata:
+      labels: {app: load-test}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: hammer
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              end=$(( $(date +%s) + 230 ))
+              while [ "$(date +%s)" -lt "$end" ]; do
+                wget -q -O /dev/null http://bloodlink-backend:8000/api/inventory
+                wget -q -O /dev/null http://bloodlink-backend:8000/api/stats
+                wget -q -O /dev/null http://bloodlink-backend:8000/api/requests
+              done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          resources:
+            requests: {cpu: 50m, memory: 16Mi}
+            limits: {cpu: 300m, memory: 32Mi}
