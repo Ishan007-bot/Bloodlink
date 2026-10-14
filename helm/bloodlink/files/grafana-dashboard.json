@@ -504,7 +504,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(http_requests_total{namespace=\"$namespace\",status=\"5xx\"}[5m])) / clamp_min(sum(rate(http_requests_total{namespace=\"$namespace\"}[5m])), 0.001)",
+          "expr": "(sum(rate(http_requests_total{namespace=\"$namespace\",status=\"5xx\"}[5m])) or vector(0)) / clamp_min(sum(rate(http_requests_total{namespace=\"$namespace\"}[5m])), 0.001)",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
