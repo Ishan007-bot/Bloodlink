@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "BloodLink API"
     app_version: str = "1.0.0"
+    # Commit the running image was built from; CI passes it as a Docker build argument.
+    git_sha: str = "dev"
     database_url: str = "postgresql+psycopg://bloodlink:bloodlink@localhost:5432/bloodlink"
 
     # Whole blood (red cells in CPDA-1) is usable for 42 days after collection.

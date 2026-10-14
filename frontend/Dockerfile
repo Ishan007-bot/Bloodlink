@@ -6,6 +6,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+# The commit being built (set by CI), shown in the page footer.
+ARG GIT_SHA=dev
+ENV VITE_BUILD_SHA=$GIT_SHA
 RUN npm run build
 
 # ---- runtime stage: unprivileged Nginx serves the files, no Node at all -----

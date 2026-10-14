@@ -16,9 +16,12 @@ LABEL org.opencontainers.image.title="bloodlink-backend" \
       org.opencontainers.image.description="BloodLink FastAPI backend" \
       org.opencontainers.image.source="https://github.com/Ishan007-bot/Bloodlink"
 
+# The commit this image was built from (set by CI), reported by GET /.
+ARG GIT_SHA=dev
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    GIT_SHA=$GIT_SHA
 
 # Remove pip from the runtime image: nothing should be installed at runtime.
 RUN pip uninstall -y pip setuptools wheel 2>/dev/null; \

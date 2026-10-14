@@ -12,6 +12,9 @@ const TABS = [
   { id: 'hospitals', label: 'Hospitals' },
 ];
 
+// Commit the bundle was built from; CI passes it to the image build.
+const BUILD = (import.meta.env.VITE_BUILD_SHA || 'dev').slice(0, 7);
+
 export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [notice, setNotice] = useState(null);
@@ -83,7 +86,9 @@ export default function App() {
         {tab === 'hospitals' && <Hospitals notify={notify} />}
       </main>
 
-      <footer>BloodLink · FastAPI + React · Shelf life 42 days · Donation gap 90 days</footer>
+      <footer>
+        BloodLink · FastAPI + React · Shelf life 42 days · Donation gap 90 days · Build <code>{BUILD}</code>
+      </footer>
     </div>
   );
 }

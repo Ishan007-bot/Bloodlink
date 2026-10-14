@@ -135,8 +135,10 @@ jobs:
           echo "tag=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
       - name: Build images
         run: |
-          docker build -t "$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-backend:${{ steps.meta.outputs.tag }}" backend
-          docker build -t "$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-frontend:${{ steps.meta.outputs.tag }}" frontend
+          for app in backend frontend; do
+            docker build --build-arg GIT_SHA="$GITHUB_SHA" \
+              -t "$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-$app:${{ steps.meta.outputs.tag }}" "$app"
+          done
       - name: Install Trivy
         run: |
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg

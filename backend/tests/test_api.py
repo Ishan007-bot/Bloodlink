@@ -17,6 +17,7 @@ def test_root_describes_the_service(client):
     body = client.get("/").json()
     assert body["service"] == "BloodLink API"
     assert body["docs"] == "/docs"
+    assert body["commit"] == "dev"
 
 
 def test_metrics_expose_http_and_inventory_metrics(client, stock):

@@ -29,7 +29,7 @@ app.include_router(router)
 
 @app.get("/", tags=["meta"])
 def root():
-    return {"service": settings.app_name, "version": settings.app_version, "docs": "/docs"}
+    return {"service": settings.app_name, "version": settings.app_version, "commit": settings.git_sha, "docs": "/docs"}
 
 
 @app.get("/health", tags=["meta"])
