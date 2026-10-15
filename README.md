@@ -69,9 +69,9 @@ flowchart LR
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Alembic, Pydantic v2 |
 | Database | PostgreSQL 16 |
 | Tests | pytest (81 tests, 97 % coverage), ruff lint + format |
-| Containers | Multi-stage Docker builds, non-root users, Docker Compose |
+| Containers | Multi-stage Docker builds on Alpine, non-root users, read-only root filesystem, Docker Compose |
 | CI/CD | GitHub Actions: tests → frontend build → secret & dependency scan → IaC checks → image build → Trivy gate → GHCR → Helm deploy |
-| Security | Trivy (images + IaC), gitleaks, pip-audit, npm audit, Pod Security "restricted", NetworkPolicy, OIDC (no AWS keys in GitHub) |
+| Security | Trivy (images + IaC; fails on any HIGH/CRITICAL, fixed or not), gitleaks, pip-audit, npm audit, Pod Security "restricted", NetworkPolicy, OIDC (no AWS keys in GitHub) |
 | Infrastructure | Terraform: VPC (2 public + 2 private subnets, NAT), EKS with managed node group and add-ons, S3 remote state |
 | Kubernetes | Helm chart: Deployments, StatefulSet, Services, Ingress, HPA, PDB, NetworkPolicy, CronJob, Secret |
 | Observability | kube-prometheus-stack: ServiceMonitor, 7 alert rules, Grafana dashboard provisioned from the chart |
