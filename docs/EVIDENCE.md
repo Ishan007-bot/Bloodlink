@@ -245,6 +245,9 @@ loaded and real ones are firing: `BloodLinkCriticalStock` (A-, B- and AB- are be
 
 ## M10 Live demo: commit → pipeline → deployment
 
+**Presentation:** [BloodLink-presentation.pdf](BloodLink-presentation.pdf) (10 slides;
+the [PowerPoint version](BloodLink-presentation.pptx) carries speaker notes for every slide).
+
 **Recorded walkthrough (1 min 38 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** Commit
 `e597a51` ("Fix migration note in backend Dockerfile") is pushed; the GitHub Actions run is
 recorded live (shown 10× faster) from in progress to green in 2 min; `helm upgrade` moves the

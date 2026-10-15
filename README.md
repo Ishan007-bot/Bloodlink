@@ -7,7 +7,7 @@ until it is used or expires, and hospitals request units for patients. BloodLink
 
 [![CI/CD](https://github.com/Ishan007-bot/Bloodlink/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Ishan007-bot/Bloodlink/actions/workflows/ci-cd.yml)
 
-> DevOps final capstone. Evidence for every rubric module, with screenshots: **[docs/EVIDENCE.md](docs/EVIDENCE.md)**. Demo recording (commit → pipeline → deployment): **[docs/demo/bloodlink-demo.mp4](docs/demo/bloodlink-demo.mp4)**.
+> DevOps final capstone. Evidence for every rubric module, with screenshots: **[docs/EVIDENCE.md](docs/EVIDENCE.md)**. Demo recording (commit → pipeline → deployment): **[docs/demo/bloodlink-demo.mp4](docs/demo/bloodlink-demo.mp4)**. Slides: **[PDF](docs/BloodLink-presentation.pdf)** · [PowerPoint, with speaker notes](docs/BloodLink-presentation.pptx).
 
 ---
 
