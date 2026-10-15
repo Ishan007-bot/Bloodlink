@@ -22,10 +22,15 @@ data "aws_iam_policy_document" "github_deploy_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # GitHub sends either the classic subject or, for repositories with immutable subjects
+    # enabled, one that pins the owner and repository IDs (so a recreated repo cannot match).
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:environment:${var.github_environment}"]
+      values = compact([
+        "repo:${var.github_repository}:environment:${var.github_environment}",
+        var.github_immutable_repository == "" ? "" : "repo:${var.github_immutable_repository}:environment:${var.github_environment}",
+      ])
     }
   }
 }

@@ -72,6 +72,12 @@ variable "github_repository" {
   default     = "Ishan007-bot/Bloodlink"
 }
 
+variable "github_immutable_repository" {
+  description = "owner@owner_id/repo@repo_id as GitHub puts it in immutable OIDC subjects (gh api repos/OWNER/REPO/actions/oidc/customization/sub). Empty to accept only the classic subject."
+  type        = string
+  default     = "Ishan007-bot@177756087/Bloodlink@1417537222"
+}
+
 variable "github_environment" {
   description = "GitHub Actions environment whose jobs may assume the deploy role."
   type        = string
