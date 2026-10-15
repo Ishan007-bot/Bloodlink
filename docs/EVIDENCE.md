@@ -229,6 +229,17 @@ loaded and real ones are firing: `BloodLinkCriticalStock` (A-, B- and AB- are be
 
 ## M10 Live demo: commit → pipeline → deployment
 
+**Recorded walkthrough (1 min 38 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** Commit
+`e597a51` ("Fix migration note in backend Dockerfile") is pushed; the GitHub Actions run is
+recorded live (shown 10× faster) from in progress to green in 2 min; `helm upgrade` moves the
+cluster from revision 7 to 8 on the new SHA; the app's footer changes from `Build e6491bf` to
+`Build e597a51`. The browser parts are screen recordings, the terminal parts are the real command
+output, and caption cards separate the steps. The EKS cluster had already been destroyed to save
+cost, so this deploy goes to the local cluster; the same flow running fully automatically on EKS
+is shown [below](#fully-automatic-push--pipeline--eks).
+
+Step by step with screenshots, from an earlier change (commit `e6491bf`):
+
 The change: commit `e6491bf` "Show build commit in API and UI" passes the commit SHA into both
 image builds; the page footer and `GET /` show which commit is running.
 
