@@ -146,13 +146,13 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/trivy.list
           sudo apt-get update -qq && sudo apt-get install -y -qq trivy
           trivy --version
-      - name: Scan backend image (fail on fixable HIGH/CRITICAL)
+      - name: Scan backend image (fail on any HIGH/CRITICAL, fixed or not)
         run: |
-          trivy image --severity "$TRIVY_SEVERITY" --ignore-unfixed --exit-code 1 --no-progress \
+          trivy image --severity "$TRIVY_SEVERITY" --exit-code 1 --no-progress \
             "$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-backend:${{ steps.meta.outputs.tag }}"
-      - name: Scan frontend image (fail on fixable HIGH/CRITICAL)
+      - name: Scan frontend image (fail on any HIGH/CRITICAL, fixed or not)
         run: |
-          trivy image --severity "$TRIVY_SEVERITY" --ignore-unfixed --exit-code 1 --no-progress \
+          trivy image --severity "$TRIVY_SEVERITY" --exit-code 1 --no-progress \
             "$REGISTRY/${{ steps.meta.outputs.owner }}/bloodlink-frontend:${{ steps.meta.outputs.tag }}"
       - name: Log in to GHCR
         if: github.event_name != 'pull_request'

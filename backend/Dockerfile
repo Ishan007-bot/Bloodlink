@@ -1,7 +1,11 @@
 # syntax=docker/dockerfile:1
 
+# Alpine, not Debian slim: slim carries ~44 HIGH CVEs with no fix yet (util-linux, ncurses,
+# systemd, perl) in packages this app never runs, and the Trivy gate fails on unfixed CVEs too.
+# Every dependency ships musllinux wheels, so nothing is compiled.
+
 # ---- build stage: install dependencies into a virtualenv -------------------
-FROM python:3.12-slim AS build
+FROM python:3.12-alpine AS build
 WORKDIR /build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
@@ -11,7 +15,7 @@ RUN pip install -r requirements.txt \
  && python -m pip uninstall -y pip
 
 # ---- runtime stage: only the venv and the application code -----------------
-FROM python:3.12-slim
+FROM python:3.12-alpine
 LABEL org.opencontainers.image.title="bloodlink-backend" \
       org.opencontainers.image.description="BloodLink FastAPI backend" \
       org.opencontainers.image.source="https://github.com/Ishan007-bot/Bloodlink"
@@ -23,9 +27,12 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     GIT_SHA=$GIT_SHA
 
-# Remove pip from the runtime image: nothing should be installed at runtime.
-RUN pip uninstall -y pip setuptools wheel 2>/dev/null; \
-    useradd --uid 10001 --create-home --shell /usr/sbin/nologin app
+# Pull in Alpine security fixes published after the base image, then remove pip and the wheels
+# ensurepip bundles (Trivy scans the packages vendored inside pip): nothing installs at runtime.
+RUN apk upgrade --no-cache \
+ && { pip uninstall -y pip setuptools wheel 2>/dev/null || true; } \
+ && rm -rf /usr/local/lib/python3.12/ensurepip \
+ && adduser -D -u 10001 -h /home/app -s /sbin/nologin app
 
 WORKDIR /app
 COPY --from=build /opt/venv /opt/venv
