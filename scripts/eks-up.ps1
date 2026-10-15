@@ -8,7 +8,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$Tag,
     [string]$Registry = "ghcr.io/ishan007-bot",
-    [string]$Region = "ap-south-1",
+    [string]$Region = "ap-southeast-2",
     [string]$ClusterName = "bloodlink-eks"
 )
 $ErrorActionPreference = "Stop"

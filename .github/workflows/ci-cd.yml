@@ -184,7 +184,7 @@ jobs:
       contents: read
       id-token: write # GitHub OIDC -> short-lived AWS credentials, no access keys stored in GitHub
     env:
-      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
       CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME || 'bloodlink-eks' }}
     steps:
       - uses: actions/checkout@v5

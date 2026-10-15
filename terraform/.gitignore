@@ -1,3 +1,6 @@
 # Provider lock files are generated per machine here; CI runs `terraform init` itself.
 .terraform.lock.hcl
 backend.hcl
+# Local overrides (e.g. a local backend for testing) stay on the machine.
+override.tf
+*_override.tf

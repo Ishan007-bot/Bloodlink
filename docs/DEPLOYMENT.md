@@ -46,7 +46,7 @@ Remove everything: `kind delete cluster --name bloodlink`.
 ## B. AWS (Terraform + EKS)
 
 > Cost: an EKS control plane, two t3.medium nodes, a NAT gateway and a load balancer are billed
-> per hour (roughly USD 0.25/hour in ap-south-1). Destroy when finished.
+> per hour (roughly USD 0.30/hour in ap-southeast-2). Destroy when finished.
 
 ### 1. Credentials
 
@@ -93,7 +93,7 @@ Set these **repository variables** (Settings → Secrets and variables → Actio
 | :--- | :--- |
 | `DEPLOY_EKS` | `true` |
 | `AWS_DEPLOY_ROLE_ARN` | `terraform -chdir=terraform output -raw github_deploy_role_arn` |
-| `AWS_REGION` | `ap-south-1` |
+| `AWS_REGION` | `ap-southeast-2` |
 | `EKS_CLUSTER_NAME` | `bloodlink-eks` |
 
 From then on every push to `main` that passes all checks runs the **Deploy to EKS** job:

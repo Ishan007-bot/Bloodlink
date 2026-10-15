@@ -1,6 +1,6 @@
 # Copy to terraform.tfvars (git-ignored) and adjust. No credentials belong in this file:
 # Terraform reads them from the AWS CLI profile / environment.
-region              = "ap-south-1"
+region              = "ap-southeast-2"
 environment         = "prod"
 cluster_name        = "bloodlink-eks"
 kubernetes_version  = "1.35"
