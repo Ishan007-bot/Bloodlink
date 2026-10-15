@@ -53,6 +53,12 @@ Remove everything: `kind delete cluster --name bloodlink`.
 An IAM user or role with permissions for EC2/VPC, EKS, IAM, S3, KMS and CloudWatch Logs,
 configured with `aws configure` (never committed). Check: `aws sts get-caller-identity`.
 
+If the account belongs to an AWS Organization, its service control policies can deny actions or
+whole regions even for an administrator ("explicit deny in a service control policy"). Check the
+region before building: `aws ec2 create-vpc --cidr-block 10.99.0.0/16 --dry-run --region <region>`
+must answer `DryRunOperation`. The account used for the evidence only allows `ap-southeast-2`,
+which is why that is the default region.
+
 ### 2. State bucket (once)
 
 ```powershell
@@ -99,6 +105,13 @@ Set these **repository variables** (Settings → Secrets and variables → Actio
 From then on every push to `main` that passes all checks runs the **Deploy to EKS** job:
 OIDC → `aws eks update-kubeconfig` → `helm upgrade --install --set image.tag=<sha> --wait`.
 No AWS access keys are stored in GitHub.
+
+The deploy role trusts only this repository's `production` environment. Repositories with
+GitHub's immutable OIDC subjects send `repo:OWNER@ID/REPO@ID:environment:production` instead of
+`repo:OWNER/REPO:...`; set `github_immutable_repository` to the value of
+`gh api repos/OWNER/REPO/actions/oidc/customization/sub` (`sub_claim_prefix` without `repo:`).
+If the job fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity", CloudTrail's
+`AssumeRoleWithWebIdentity` event shows the subject GitHub actually sent.
 
 ### 6. Tear down
 

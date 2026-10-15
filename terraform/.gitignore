@@ -4,4 +4,4 @@ backend.hcl
 # Local overrides (e.g. a local backend for testing) stay on the machine.
 override.tf
 *_override.tf
-apply.log
+*.log

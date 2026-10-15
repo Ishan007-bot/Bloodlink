@@ -2,7 +2,8 @@
 
 Screenshots for every module of the grading rubric, in rubric order. Every screenshot was taken
 from the real system: the application on a local Kubernetes cluster (kind) and Docker Compose,
-the GitHub Actions pipeline of this repository, and GHCR.
+on AWS EKS (built with Terraform in `ap-southeast-2`, Sydney), the GitHub Actions pipeline of
+this repository, and GHCR.
 
 - Repository: https://github.com/Ishan007-bot/Bloodlink
 - Pipeline: https://github.com/Ishan007-bot/Bloodlink/actions
@@ -19,6 +20,7 @@ the GitHub Actions pipeline of this repository, and GHCR.
 | M7 Terraform | [Terraform](#m7-terraform) |
 | M8 Kubernetes + Helm | [Kubernetes](#m8-kubernetes--helm) |
 | M9 Observability | [Observability](#m9-observability) |
+| M8 on AWS | [BloodLink on EKS](#bloodlink-on-aws-eks) |
 | M10 Live demo | [Commit to deployment](#m10-live-demo-commit--pipeline--deployment) |
 | Troubleshooting | [Troubleshooting lab](#troubleshooting-lab) |
 
@@ -145,10 +147,22 @@ subnets, Internet Gateway, NAT gateway), an EKS cluster with a managed node grou
 the private subnets), EKS add-ons (VPC CNI with NetworkPolicy, CoreDNS, kube-proxy, Pod Identity,
 EBS CSI driver, metrics-server), S3 remote state, and the GitHub OIDC deploy role.
 
+Region: `ap-southeast-2` (Sydney). The AWS account's organization only allows that region, so every
+other region is denied by a service control policy; the region is a variable, nothing else changed.
+
 | Criterion | Evidence |
 | :--- | :--- |
-| Valid HCL, `terraform init` | [01-init-validate](evidence/07-terraform/01-init-validate.png): init, `fmt -check`, `validate` succeed; the same checks run in CI on every push |
-| `terraform.tfvars.example`, no credentials committed | [terraform.tfvars.example](../terraform/terraform.tfvars.example); `*.tfvars`, state and `backend.hcl` are git-ignored; gitleaks finds nothing |
+| Valid HCL | [01-init-validate](evidence/07-terraform/01-init-validate.png): init, `fmt -check`, `validate` succeed; the same checks run in CI on every push |
+| `terraform init` | [02-init-s3-backend](evidence/07-terraform/02-init-s3-backend.png): state bucket created by `terraform/bootstrap`, then init against the S3 backend |
+| `terraform plan`, non-empty, no errors | [03-plan](evidence/07-terraform/03-plan.png): **66 to add, 0 to change, 0 to destroy** |
+| `terraform apply` | [04-apply-complete](evidence/07-terraform/04-apply-complete.png): **66 added**; EKS control plane 8m39s, node group 2m7s |
+| VPC with 2+ public subnets (AWS Console) | [06-console-vpc](evidence/07-terraform/06-console-vpc.png), [07-console-subnets](evidence/07-terraform/07-console-subnets.png): `bloodlink-eks-vpc` 10.40.0.0/16, 2 public + 2 private subnets in 2 AZs; [08-console-nat](evidence/07-terraform/08-console-nat.png) (NAT gateway for the private subnets) |
+| EKS with a worker node group (AWS Console) | [09-console-eks-cluster](evidence/07-terraform/09-console-eks-cluster.png): `bloodlink-eks` **Active**, Kubernetes 1.35, 1 node group, 6 add-ons and [11-console-eks-addons](evidence/07-terraform/11-console-eks-addons.png); [05-kubectl-eks-nodes](evidence/07-terraform/05-kubectl-eks-nodes.png): 2 nodes Ready |
+| `terraform destroy` cleans up | [12-teardown-k8s](evidence/07-terraform/12-teardown-k8s.png) (load balancer and EBS volumes released first), [13-destroy-complete](evidence/07-terraform/13-destroy-complete.png): **66 destroyed**, [14-nothing-left](evidence/07-terraform/14-nothing-left.png): no cluster, VPC, NAT, load balancer, volume or state bucket remains |
+| `terraform.tfvars.example`, no credentials committed | [terraform.tfvars.example](../terraform/terraform.tfvars.example); `*.tfvars`, state, plans and `backend.hcl` are git-ignored; gitleaks finds nothing |
+
+Every `apply` and `destroy` ran from a saved plan file that was reviewed first (`plan -out`, then
+`apply <plan>`), never `-auto-approve`.
 
 ## M8 Kubernetes + Helm
 
@@ -173,6 +187,21 @@ Beyond the minimum:
 - NetworkPolicy: only pods labelled as database clients of this release reach PostgreSQL: [13-networkpolicy](evidence/08-kubernetes/13-networkpolicy.png)
 - Pod Security "restricted": a privileged pod is rejected: [14-pod-security](evidence/08-kubernetes/14-pod-security.png)
 - PostgreSQL StatefulSet with a PersistentVolume, PodDisruptionBudget, nightly backup CronJob ([07-backup](evidence/11-troubleshooting/07-backup.png)), database password generated into a Secret, never in Git
+
+### BloodLink on AWS EKS
+
+The same chart on the Terraform-built cluster, installed by [scripts/eks-up.ps1](../scripts/eks-up.ps1)
+with [values-eks.yaml](../helm/bloodlink/values-eks.yaml): ingress-nginx behind an AWS Network Load
+Balancer, PostgreSQL on encrypted gp3 EBS volumes, kube-prometheus-stack.
+
+| What | Evidence |
+| :--- | :--- |
+| kubectl on EKS, nodes Ready | [01-context-and-nodes](evidence/12-aws-eks/01-context-and-nodes.png) |
+| `helm list` | [02-helm-list](evidence/12-aws-eks/02-helm-list.png) |
+| Pods Running, ClusterIP Services, Ingress on the load balancer | [03-pods-svc-ingress](evidence/12-aws-eks/03-pods-svc-ingress.png) |
+| gp3 volumes bound, HPA, PDB, NetworkPolicy | [04-storage-hpa](evidence/12-aws-eks/04-storage-hpa.png) |
+| `helm test` passes, API answers on the AWS URL | [05-helm-test-and-api](evidence/12-aws-eks/05-helm-test-and-api.png) |
+| The app in the browser through the load balancer | [06-app-on-aws-load-balancer](evidence/12-aws-eks/06-app-on-aws-load-balancer.png) |
 
 ## M9 Observability
 
@@ -211,6 +240,25 @@ image builds; the page footer and `GET /` show which commit is running.
 | After: the app shows the new build | [05-after-ui](evidence/10-live-demo/05-after-ui.png), [06-after-footer](evidence/10-live-demo/06-after-footer.png): footer reads `Build e6491bf` |
 
 The rollout uses `maxUnavailable: 0`, so users are served during the whole update.
+
+### Fully automatic: push → pipeline → EKS
+
+With the repository variable `DEPLOY_EKS=true`, the last job of the pipeline deploys every green
+commit on `main` to EKS. GitHub signs in to AWS with OIDC (short-lived credentials, no AWS keys
+stored in GitHub); the role only trusts this repository's `production` environment.
+
+| Step | Evidence |
+| :--- | :--- |
+| Commit `388c554` pushed; tests, scans, images, then **Deploy to EKS** all green | [07-pipeline-deploys-to-eks](evidence/12-aws-eks/07-pipeline-deploys-to-eks.png) |
+| Deploy job: OIDC sign-in, `helm upgrade` to revision 2, rollout complete | [08-deploy-job-log](evidence/12-aws-eks/08-deploy-job-log.png) |
+| EKS runs the new SHA | [09-eks-after-cd](evidence/12-aws-eks/09-eks-after-cd.png) |
+| The app on AWS shows `Build 388c554` | [10-app-footer-new-build](evidence/12-aws-eks/10-app-footer-new-build.png) |
+
+The first attempt failed safely: AWS refused the sign-in because GitHub sends the newer immutable
+subject (`repo:Ishan007-bot@177756087/Bloodlink@1417537222:environment:production`) and the role
+only accepted the classic one. CloudTrail showed the exact subject; the trust policy in
+[github-oidc.tf](../terraform/github-oidc.tf) now accepts both, each pinned exactly. Before the
+teardown `DEPLOY_EKS` was set back to `false`, so no push can deploy to a cluster that no longer exists.
 
 ## Troubleshooting lab
 
