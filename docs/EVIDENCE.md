@@ -122,18 +122,34 @@ looks helpful (A- stock is often low) but would give Rh-positive blood to Rh-neg
 | Criterion | Evidence |
 | :--- | :--- |
 | Trivy scans both images in CI | [01-trivy-ci-scan](evidence/06-security/01-trivy-ci-scan.png) |
-| Fails on HIGH or CRITICAL | [02-trivy-gate-config](evidence/06-security/02-trivy-gate-config.png): `TRIVY_SEVERITY: HIGH,CRITICAL`, `trivy image --severity "$TRIVY_SEVERITY" --ignore-unfixed --exit-code 1`, before the push step |
+| Fails on HIGH or CRITICAL | [02-trivy-gate-config](evidence/06-security/02-trivy-gate-config.png): `TRIVY_SEVERITY: HIGH,CRITICAL`, `trivy image --severity "$TRIVY_SEVERITY" --exit-code 1`, before the push step. It fails on **any** HIGH or CRITICAL, whether or not a fix exists |
+| The gate catching real CVEs | [04-strict-gate-debian-image](evidence/06-security/04-strict-gate-debian-image.png): the previous Debian-based backend image fails the strict gate with 44 HIGH findings |
 | No secrets in Git | [03-secret-and-dependency-scan](evidence/06-security/03-secret-and-dependency-scan.png): gitleaks scanned all commits, `no leaks found` |
 
-**What Trivy scanned and what the result means.** Trivy scanned both images built by the pipeline
-(the Debian packages of `python:3.12-slim`, the Alpine packages of the Nginx image, and every
-Python package in the backend's virtualenv) for known CVEs. The gate is set to fail the pipeline on
-any HIGH or CRITICAL vulnerability that has a fix available. The result is 0 for both images,
-because both base images are current releases, the frontend image runs `apk upgrade` to pick up
-Alpine fixes published after its base image, and the backend image has pip removed from the
-runtime layer. A finding would stop the job before `docker push`, so a vulnerable image never
-reaches GHCR or the cluster. Trivy also scans the Terraform and Kubernetes manifests
-(`trivy config`); the accepted exceptions are listed with reasons in [.trivyignore](../.trivyignore).
+**What Trivy scans.** Each image the pipeline builds, before it is pushed: the operating-system
+packages (Alpine in both images) and every Python package in the backend's virtualenv. A finding
+stops the job before `docker push`, so a vulnerable image never reaches GHCR or a cluster. Trivy
+also scans the Terraform and Kubernetes manifests (`trivy config`); the accepted exceptions are
+listed with reasons in [.trivyignore](../.trivyignore).
+
+**What it found, and one CVE explained.** At first the gate used `--ignore-unfixed`: it only failed
+on vulnerabilities that already had a fix, and the backend, then built on Debian `python:3.12-slim`,
+passed. Scanning that image without the flag showed what was being let through: **44 HIGH findings
+from 8 CVEs, none with a fix available yet**, in util-linux, ncurses, systemd, acl and perl.
+For example, **CVE-2026-76642** in util-linux: `mount` does not check whether an external mount
+helper failed before running the privileged `X-mount.owner` / `X-mount.idmap` post-mount hooks, so
+an unprivileged local user can change ownership of, or clone with suid bits, a filesystem they
+should not control. That is local privilege escalation. In BloodLink the practical risk was low
+(the container runs as uid 10001, with a read-only root filesystem, all capabilities dropped, and
+never calls `mount`), but the vulnerable code still shipped in every image.
+
+**The fix, and what the clean result means.** Instead of accepting the risk, the backend moved to
+`python:3.12-alpine`, which does not contain those packages at all (291 MB → 195 MB); `apk upgrade`
+picks up Alpine fixes published after the base image, and pip with its bundled wheels is removed,
+because Trivy also scans the packages pip vendors inside itself. Both images then scanned clean at
+every HIGH and CRITICAL finding, fixed or not, so `--ignore-unfixed` was removed: **0 HIGH, 0
+CRITICAL** now means there is no known serious vulnerability in the image at all, not just none
+with a patch.
 
 Further layers: pip-audit and npm audit (0 known vulnerabilities), Pod Security "restricted" on the
 namespace ([14-pod-security](evidence/08-kubernetes/14-pod-security.png)), a NetworkPolicy that only
