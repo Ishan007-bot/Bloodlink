@@ -1,5 +1,8 @@
 # BloodLink
 
+## Ishan Ganguly · Roll No - 24bcs10330 · Batch 2028 · Section A ##
+
+
 **Blood bank inventory and hospital request system.** Donors give blood, every unit is tracked
 until it is used or expires, and hospitals request units for patients. BloodLink allocates
 **compatible** blood, uses the **oldest units first** so less blood is wasted, serves
@@ -9,12 +12,12 @@ until it is used or expires, and hospitals request units for patients. BloodLink
 
 **Start here:**
 
-- **[Demo video](docs/demo/bloodlink-demo.mp4)** (3½ minutes, narrated): a real live demo. A commit is pushed,
+- **[Demo video](https://drive.google.com/file/d/1ZLWjHB1ZK-ct8cg0kyptK5HpaRBfAgXC/view?usp=sharing)** (3½ minutes, narrated): a real live demo. A commit is pushed,
   the project is walked through while the pipeline runs (tests, Docker, CI/CD, Trivy, AWS, Kubernetes,
   monitoring), then Helm deploys that commit and the app shows the change. The terminals replay real
   commands with their real output.
 - **[Presentation slides (PDF)](docs/BloodLink-presentation.pdf)**, 10 slides, viewable right
-  here on GitHub. Also as [PowerPoint](docs/BloodLink-presentation.pptx) with speaker notes.
+  here on GitHub. Also as [PowerPoint](https://docs.google.com/presentation/d/1n95IMMrQ1p83bavVRdWxHTQvL39LLY1i/edit?usp=sharing&ouid=116120518469745590275&rtpof=true&sd=true) with speaker notes.
 - **[Evidence for every rubric module](docs/EVIDENCE.md)**, with about 100 screenshots.
 
 ![BloodLink dashboard: stock by blood group, units to use first, latest requests](docs/evidence/01-application/01-dashboard.png)
