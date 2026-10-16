@@ -248,14 +248,15 @@ loaded and real ones are firing: `BloodLinkCriticalStock` (A-, B- and AB- are be
 **Presentation:** [BloodLink-presentation.pdf](BloodLink-presentation.pdf) (10 slides;
 the [PowerPoint version](BloodLink-presentation.pptx) carries speaker notes for every slide).
 
-**Recorded walkthrough (1 min 38 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** Commit
-`e597a51` ("Fix migration note in backend Dockerfile") is pushed; the GitHub Actions run is
-recorded live (shown 10× faster) from in progress to green in 2 min; `helm upgrade` moves the
-cluster from revision 7 to 8 on the new SHA; the app's footer changes from `Build e6491bf` to
-`Build e597a51`. The browser parts are screen recordings, the terminal parts are the real command
-output, and caption cards separate the steps. The EKS cluster had already been destroyed to save
-cost, so this deploy goes to the local cluster; the same flow running fully automatically on EKS
-is shown [below](#fully-automatic-push--pipeline--eks).
+**Demo video (3 min 28 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** An animated tour
+built only from real screenshots of the running system: a live AB- emergency request filled on the
+cluster (exact unit first, then substitutes, O- held back), the failing pull request, the Trivy
+gate, Terraform and EKS in the AWS Console, Grafana. It ends with the deployment loop: commit
+`e597a51` ("Fix migration note in backend Dockerfile") is pushed, the GitHub Actions run goes from
+in progress to green, `helm upgrade` moves the cluster from revision 7 to 8 on the new SHA, and the
+app's footer changes from `Build e6491bf` to `Build e597a51`. That deploy went to the local
+cluster, because the EKS cluster had already been destroyed to save cost; the same flow running
+fully automatically on EKS is shown [below](#fully-automatic-push--pipeline--eks).
 
 Step by step with screenshots, from an earlier change (commit `e6491bf`):
 

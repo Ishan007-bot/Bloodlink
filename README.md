@@ -9,8 +9,9 @@ until it is used or expires, and hospitals request units for patients. BloodLink
 
 **Start here:**
 
-- **[Demo recording](docs/demo/bloodlink-demo.mp4)** (1½ minutes): one commit goes from
-  `git push` through the pipeline to the running cluster, and the app's footer changes build.
+- **[Demo video](docs/demo/bloodlink-demo.mp4)** (3½ minutes): an animated tour built from real
+  screenshots of the running system, from a live emergency request to the pipeline, AWS and
+  monitoring, ending with one commit going from `git push` to the running cluster.
 - **[Presentation slides (PDF)](docs/BloodLink-presentation.pdf)**, 10 slides, viewable right
   here on GitHub. Also as [PowerPoint](docs/BloodLink-presentation.pptx) with speaker notes.
 - **[Evidence for every rubric module](docs/EVIDENCE.md)**, with about 100 screenshots.
