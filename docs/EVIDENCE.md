@@ -248,7 +248,7 @@ loaded and real ones are firing: `BloodLinkCriticalStock` (A-, B- and AB- are be
 **Presentation:** [BloodLink-presentation.pdf](BloodLink-presentation.pdf) (10 slides;
 the [PowerPoint version](BloodLink-presentation.pptx) carries speaker notes for every slide).
 
-**Demo video (3 min 34 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** A real live demo,
+**Demo video (3 min 40 s, narrated, with webcam): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** A real live demo,
 recorded on 16 Oct 2026: the cluster runs build `6d91154`; commit `1a9fba3` ("Mention the emergency
 queue in the header") is pushed; while [pipeline run 38885317180](https://github.com/Ishan007-bot/Bloodlink/actions/runs/38885317180)
 runs (green in 2 min 25 s), the video walks through the app, tests, Docker image, CI/CD, Trivy, AWS,
