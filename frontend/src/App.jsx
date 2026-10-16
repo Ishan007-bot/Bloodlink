@@ -49,7 +49,7 @@ export default function App() {
           </svg>
           <div>
             <strong>BloodLink</strong>
-            <span>Blood bank inventory &amp; hospital requests</span>
+            <span>Blood bank inventory, hospital requests &amp; the emergency queue</span>
           </div>
         </div>
         <span className={`status-pill ${online ? 'up' : online === false ? 'down' : ''}`}>
