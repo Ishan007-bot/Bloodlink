@@ -9,9 +9,10 @@ until it is used or expires, and hospitals request units for patients. BloodLink
 
 **Start here:**
 
-- **[Demo video](docs/demo/bloodlink-demo.mp4)** (3½ minutes): an animated tour built from real
-  screenshots of the running system, from a live emergency request to the pipeline, AWS and
-  monitoring, ending with one commit going from `git push` to the running cluster.
+- **[Demo video](docs/demo/bloodlink-demo.mp4)** (3½ minutes): a real live demo. A commit is pushed,
+  the project is walked through while the pipeline runs (tests, Docker, CI/CD, Trivy, AWS, Kubernetes,
+  monitoring), then Helm deploys that commit and the app shows the change. The terminals replay real
+  commands with their real output.
 - **[Presentation slides (PDF)](docs/BloodLink-presentation.pdf)**, 10 slides, viewable right
   here on GitHub. Also as [PowerPoint](docs/BloodLink-presentation.pptx) with speaker notes.
 - **[Evidence for every rubric module](docs/EVIDENCE.md)**, with about 100 screenshots.

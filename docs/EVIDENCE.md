@@ -248,15 +248,16 @@ loaded and real ones are firing: `BloodLinkCriticalStock` (A-, B- and AB- are be
 **Presentation:** [BloodLink-presentation.pdf](BloodLink-presentation.pdf) (10 slides;
 the [PowerPoint version](BloodLink-presentation.pptx) carries speaker notes for every slide).
 
-**Demo video (3 min 28 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** An animated tour
-built only from real screenshots of the running system: a live AB- emergency request filled on the
-cluster (exact unit first, then substitutes, O- held back), the failing pull request, the Trivy
-gate, Terraform and EKS in the AWS Console, Grafana. It ends with the deployment loop: commit
-`e597a51` ("Fix migration note in backend Dockerfile") is pushed, the GitHub Actions run goes from
-in progress to green, `helm upgrade` moves the cluster from revision 7 to 8 on the new SHA, and the
-app's footer changes from `Build e6491bf` to `Build e597a51`. That deploy went to the local
-cluster, because the EKS cluster had already been destroyed to save cost; the same flow running
-fully automatically on EKS is shown [below](#fully-automatic-push--pipeline--eks).
+**Demo video (3 min 34 s): [demo/bloodlink-demo.mp4](demo/bloodlink-demo.mp4).** A real live demo,
+recorded on 16 Oct 2026: the cluster runs build `6d91154`; commit `1a9fba3` ("Mention the emergency
+queue in the header") is pushed; while [pipeline run 38885317180](https://github.com/Ishan007-bot/Bloodlink/actions/runs/38885317180)
+runs (green in 2 min 25 s), the video walks through the app, tests, Docker image, CI/CD, Trivy, AWS,
+Kubernetes and monitoring; then `helm upgrade --set image.tag=1a9fba3…` takes the release to
+revision 10 and the app shows the new tagline and `Build 1a9fba3` in its footer. Every terminal in
+the video replays a command that was really run, with its real output; every other picture is a
+real screenshot. The EKS cluster had already been destroyed to save cost, so this deploy goes to the
+local cluster; the same flow running fully automatically on EKS is shown
+[below](#fully-automatic-push--pipeline--eks).
 
 Step by step with screenshots, from an earlier change (commit `e6491bf`):
 
